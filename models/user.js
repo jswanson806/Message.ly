@@ -34,29 +34,10 @@ class User {
   /** Authenticate: is this username/password valid? Returns boolean. */
 
   static async authenticate(username, password) {
-      // query the username and password from db
       const result = await db.query(`
-      SELECT username, password
-      FROM users
-      WHERE username = $1`,
-      [username]);
-
-      // handle missing username in db
-      if(result.rows.length === 0) {
-        throw new ExpressError(`Cannot find user ${username}`, 400)
-      }
-
-      const user = result.rows[0];
-      // check for the user to have been found
-      if(user){
-        // compare password and user.password
-        if(await bcrypt.compare(password, user.password)) {
-          // if true, sign and return true, otherwise return false
-          let token = jwt.sign({ username }, SECRET_KEY);
-          return token;
-        }
-          return false;
-      }
+        SELECT password FROM users WHERE username = $1`, [username]);
+      let user = result.rows[0];
+      return user && await bcrypt.compare(password, user.password);
   }
 
   /** Update last_login_at for user */
